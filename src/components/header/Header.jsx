@@ -1,4 +1,4 @@
-import React,{useState} from 'react'
+import React,{useContext, useState} from 'react'
 import { FontAwesomeIcon} from "@fortawesome/react-fontawesome"
 import { faBed,faCalendarDays,faCar,faPerson,faPlane,faTaxi } from '@fortawesome/free-solid-svg-icons'
 import {format} from 'date-fns'
@@ -7,21 +7,27 @@ import 'react-date-range/dist/styles.css'; // main css file
 import 'react-date-range/dist/theme/default.css'; // theme css file
 import "./header.css"
 import { useNavigate } from 'react-router-dom';
+import { SearchContext } from '../../context/SearchContext';
+import { AuthContext } from '../../context/AuthContext';
 
 const Header = ({type}) => {
+
+  const { user } = useContext(AuthContext);
+
+
   const[openDate ,setOpenDate] =useState(false)
   const[destination ,setDestination] =useState('')
   const[openOptions ,setOpenOptions] =useState(false)
-  const[Options ,setOptions]=useState({
+  const[options ,setOptions]=useState({
     adult:1,
     children:0,
     room:1
   })
-  const [date, setDate] = useState([
+  const [dates, setDates] = useState([
     {
       startDate: new Date(),
       endDate: new Date(),
-      key: 'selection'
+      key: 'selection' 
     }
   ]);
   
@@ -30,11 +36,16 @@ const Header = ({type}) => {
     setOptions((prev) => {
 
      return {
-        ...prev , [name]:operation === "i" ? Options[name]+1:Options[name] -1,
+        ...prev , [name]:operation === "i" ? options[name]+1:options[name] -1,
       }});
     }
+
+    const {dispatch} =useContext(SearchContext)
+    console.log(dates);
+
     const handleSearch = ()=>{
-      navigate("/hotels" , {state :{destination , date,Options}})
+      dispatch({type:"NEW_SEARCH" , payload:{destination,dates,options}})
+      navigate("/hotels" , {state :{destination , dates,options}})
     }
 
   return (
@@ -68,8 +79,8 @@ const Header = ({type}) => {
 <>
         <h1 className="headerTitle">A lifetime of discounts? It's Genius.</h1>
         <p className="hederDesc">Get rewarded for your travels – unlock instant savings of 10% or more with a free Booking.com account</p>
-        <button className="headerBtn">Sign in / Register</button>
-
+       { !user && <button className="headerBtn">Sign in / Register</button>
+}
         <div className="headerSearch">
           <div className="headerSearchItem">
           <FontAwesomeIcon icon={faBed} className="headerIcon" />
@@ -83,17 +94,17 @@ const Header = ({type}) => {
           <div className="headerSearchItem">
           <FontAwesomeIcon icon={faCalendarDays} className="headerIcon" />
           <span onClick={()=>setOpenDate(!openDate)} className='headerSearchText'>
-            {`${format(date[0].startDate , 
+            {`${format(dates[0].startDate , 
             "MM/dd/yyy")} to 
-            ${format(date[0].endDate , "MM/dd/yyy")} `}
+            ${format(dates[0].endDate , "MM/dd/yyy")} `}
           </span>
           {openDate  &&
           <DateRange
           editableDateInputs={true}
-          onChange={item => setDate([item.selection])}
+          onChange={item => setDates([item.selection])}
           moveRangeOnFirstSelection={false}
           className='date'
-          ranges={date}
+          ranges={dates}
           minDate={new Date()}
           />
         }
@@ -103,16 +114,16 @@ const Header = ({type}) => {
           <FontAwesomeIcon icon={faPerson} className="headerIcon" />
           <span 
           onClick={()=>setOpenOptions(!openOptions)}
-          className='headerSearchText'>{`${Options.adult} adult . ${Options.children} children . ${Options.room} Room`}</span>
+          className='headerSearchText'>{`${options.adult} adult . ${options.children} children . ${options.room} Room`}</span>
           {openOptions && 
           <div className="options">
             <div className="optionItem">
             <div className="optionText">Adult</div>
             <div className="optionCounter">
             <button className="optionCounterButton" onClick={()=>handleOption("adult" , "d")}
-            disabled={Options.adult<=1}
+            disabled={options.adult<=1}
             >-</button>
-            <span className="optionCounterNumber">1</span>
+            <span className="optionCounterNumber">{options.adult}</span>
             <button className="optionCounterButton" onClick={()=>handleOption("adult" , "i")}>+</button>
             </div>
             </div>
@@ -121,9 +132,9 @@ const Header = ({type}) => {
             <div className="optionCounter">
             <button className="optionCounterButton"onClick={()=>handleOption("children" , "d")
           }
-          disabled={Options.children<=0}
+          disabled={options.children<=0}
           >-</button>
-            <span className="optionCounterNumber">0</span>
+            <span className="optionCounterNumber">{options.children}</span>
             <button className="optionCounterButton"onClick={()=>handleOption("children" , "i")}>+</button>
             </div>
             </div>
@@ -131,8 +142,8 @@ const Header = ({type}) => {
             <div className="optionText">Room</div>
             <div className="optionCounter">
 
-            <button className="optionCounterButton"onClick={()=>handleOption("room" , "d")}            disabled={Options.room<=1}>-</button>
-            <span className="optionCounterNumber">1</span>
+            <button className="optionCounterButton"onClick={()=>handleOption("room" , "d")} disabled={options.room<=1}>-</button>
+            <span className="optionCounterNumber">{options.room}</span>
             <button className="optionCounterButton"onClick={()=>handleOption("room" , "i")}>+</button>
             </div>
             </div>
